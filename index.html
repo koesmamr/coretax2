@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Evaluasi Pelaporan SPT - RSUD dr. R. Koesma</title>
     
-    <!-- Favicon & Logo Sesuai Permintaan -->
+    <!-- Favicon & Logo -->
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/srpcom/koesmaparkir/main/new%20logo%20rsud%202025%20kecil.png">
     
     <!-- Tailwind CSS & FontAwesome -->
@@ -71,7 +71,6 @@
         }
     </style>
 </head>
-<!-- Default dimulai di login-mode -->
 <body class="min-h-screen flex flex-col login-mode">
 
     <!-- LAYER PARTICLES.JS -->
@@ -80,7 +79,7 @@
     <!-- OVERLAY LOADER -->
     <div id="loader"><div class="spinner"></div><p class="text-white mt-4 font-semibold text-lg animate-pulse" id="loader-text">Memproses...</p></div>
 
-    <!-- HEADER / NAVBAR (Sembunyi otomatis saat di halaman login) -->
+    <!-- HEADER / NAVBAR -->
     <header id="app-header" class="hidden bg-blue-700 bg-opacity-95 text-white shadow-lg p-3 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2 md:gap-3 min-w-0 pr-2">
@@ -91,7 +90,6 @@
                 </div>
             </div>
             
-            <!-- Navbar Actions -->
             <div id="nav-actions" class="hidden flex items-center gap-1 md:gap-4 text-sm flex-shrink-0">
                 <button onclick="switchView('view-spt')" class="hover:text-blue-200 transition p-2"><i class="fas fa-home text-lg md:text-base"></i> <span class="hidden md:inline ml-1">Dashboard</span></button>
                 <button id="btn-nav-admin" onclick="loadAdminDashboard()" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 md:px-3 rounded-md font-bold shadow transition"><i class="fas fa-shield-alt"></i> <span class="hidden md:inline ml-1">Admin</span></button>
@@ -103,7 +101,7 @@
     <!-- MAIN CONTENT -->
     <main class="flex-grow flex items-center justify-center p-4">
         
-        <!-- 1. VIEW LOGIN (Glassmorphism Design) -->
+        <!-- 1. VIEW LOGIN (Glassmorphism) -->
         <div id="view-login" class="w-full max-w-md bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 md:p-10 text-center shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] relative z-10 transition-all duration-500">
             <div class="bg-white/20 p-3 rounded-2xl inline-block mb-6 shadow-sm border border-white/30">
                 <img src="https://raw.githubusercontent.com/srpcom/koesmaparkir/main/new%20logo%20rsud%202025%20kecil.png" alt="Logo RSUD dr. R. Koesma" class="h-20 md:h-24 mx-auto object-contain drop-shadow-md">
@@ -323,10 +321,10 @@
             <div id="admin-tab-spt">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
                     <div class="flex items-center gap-3">
-                        <h3 class="font-bold text-gray-700 text-sm md:text-base">Daftar Pegawai Lapor SPT</h3>
-                        <div id="bulk-action-container-spt" class="hidden flex gap-2 ml-2">
-                            <button onclick="prosesBulkVerifikasi('Terverifikasi Sesuai')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded text-xs md:text-sm font-bold shadow transition"><i class="fas fa-check-double mr-1"></i> Setujui</button>
-                            <button onclick="prosesBulkVerifikasi('Tidak Sesuai / Ditolak')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded text-xs md:text-sm font-bold shadow transition"><i class="fas fa-times-circle mr-1"></i> Tolak</button>
+                        <h3 class="font-bold text-gray-700 text-sm md:text-base whitespace-nowrap">Daftar Pegawai Lapor SPT</h3>
+                        <div id="bulk-action-container-spt" class="hidden flex gap-2">
+                            <button onclick="prosesBulkVerifikasi('Terverifikasi Sesuai')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded text-[10px] md:text-xs font-bold shadow transition whitespace-nowrap"><i class="fas fa-check-double mr-1"></i> Setujui</button>
+                            <button onclick="prosesBulkVerifikasi('Tidak Sesuai / Ditolak')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded text-[10px] md:text-xs font-bold shadow transition whitespace-nowrap"><i class="fas fa-times-circle mr-1"></i> Tolak</button>
                         </div>
                     </div>
                     <div class="flex gap-2 w-full sm:w-auto">
@@ -390,7 +388,7 @@
     <!-- SCRIPT APLIKASI -->
     <script>
         // =======================================================================
-        // WAJIB GANTI URL INI DENGAN URL WEB APP BARU SETELAH DEPLOY!
+        // URL WEB APP ANDA
         // =======================================================================
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyUu86Fgph76tNa7vSyfM5KWBzImXzVtSPe8tr2GE5xddRNsqvOR_XvkJo6DfgtpYmj/exec";
         
@@ -405,7 +403,7 @@
         let currentPageSPT = 1;
         const rowsPerPageSPT = 15;
 
-        // INIT PARTICLES (Aktif hanya saat login-mode)
+        // INIT PARTICLES & CEK SESI LOGIN
         window.onload = function() {
             if(typeof particlesJS !== 'undefined') {
                 particlesJS("particles-js", {
@@ -427,11 +425,9 @@
                 });
             }
             
-            // Cek apakah ada sesi login tersimpan
             cekSesiLogin();
         };
 
-        // FUNGSI CEK SESI LOGIN
         function cekSesiLogin() {
             const savedUser = localStorage.getItem('spt_user');
             const savedToken = localStorage.getItem('spt_token');
@@ -460,13 +456,11 @@
         }
 
         function switchView(viewId) {
-            // Sembunyikan semua view main container
             document.querySelectorAll('main > div').forEach(el => {
                 if (el.id.startsWith('view-')) el.classList.add('hidden');
             });
             document.getElementById(viewId).classList.remove('hidden');
 
-            // Kontrol Mode UI (Background & Header/Footer visibility)
             if (viewId === 'view-login') {
                 document.body.classList.remove('app-mode');
                 document.body.classList.add('login-mode');
@@ -484,7 +478,6 @@
             currentUser = null;
             currentToken = null;
             
-            // Hapus sesi tersimpan saat logout
             localStorage.removeItem('spt_user');
             localStorage.removeItem('spt_token');
             
@@ -507,7 +500,6 @@
                 if (data.status === 'success') {
                     document.getElementById('nav-actions').classList.remove('hidden');
                     
-                    // Simpan token ke localStorage untuk diakses kembali saat F5
                     localStorage.setItem('spt_token', currentToken);
                     
                     if (data.isRegistered) {
@@ -515,9 +507,7 @@
                         currentUser.Role = data.role;
                         currentUser.sptHistory = data.sptHistory || [];
                         
-                        // Simpan profil lengkap pengguna ke localStorage
                         localStorage.setItem('spt_user', JSON.stringify(currentUser));
-                        
                         prepareUserDashboard();
                     } else {
                         currentUser = { Email: data.email, Role: data.role };
@@ -525,7 +515,6 @@
                         switchView('view-profil');
                     }
                     
-                    // Setup Admin Button
                     const btnAdmin = document.getElementById('btn-nav-admin');
                     if (data.role === 'Admin' || data.role === 'Superadmin') {
                         btnAdmin.classList.remove('hidden');
@@ -579,11 +568,9 @@
                     currentUser['NIK'] = profileData.nik;
                     currentUser['Nomor HP'] = profileData.nomorHp;
                     currentUser['Ruangan'] = profileData.ruangan;
-                    currentUser.sptHistory = []; // Profil baru, belum ada riwayat
+                    currentUser.sptHistory = [];
                     
-                    // Simpan profil ke localStorage setelah selesai pendaftaran profil
                     localStorage.setItem('spt_user', JSON.stringify(currentUser));
-                    
                     prepareUserDashboard();
                 } else { throw new Error(data.message); }
             } catch (err) { Swal.fire('Gagal', err.message, 'error'); } 
@@ -592,13 +579,11 @@
 
         // 3. PREPARE USER DASHBOARD
         function prepareUserDashboard() {
-            // Set Data Diri ReadOnly
             document.getElementById('spt-email-display').value = currentUser.Email || '-';
             document.getElementById('spt-nama-display').value = currentUser['Nama Lengkap'] || '-';
             document.getElementById('spt-nik-display').value = currentUser['NIK'] || '-';
             document.getElementById('spt-ruangan-display').value = currentUser['Ruangan'] || '-';
             
-            // Set Role Badge
             const badge = document.getElementById('user-role-badge');
             badge.innerText = currentUser.Role;
             badge.className = currentUser.Role === 'Superadmin' ? 'bg-purple-100 text-purple-800 text-[10px] md:text-xs font-bold px-2 md:px-3 py-1 rounded-full shadow-sm' : 
@@ -616,7 +601,6 @@
 
             if (currentUser.sptHistory && currentUser.sptHistory.length > 0) {
                 container.classList.remove('hidden');
-                // Urutkan riwayat dari terbaru
                 const sortedHistory = currentUser.sptHistory.sort((a,b) => new Date(b.waktu) - new Date(a.waktu));
                 
                 sortedHistory.forEach(h => {
@@ -633,7 +617,7 @@
             }
         }
 
-        // 4. BANTUAN KONVERSI & KOMPRESI FILE KE BASE64 (CLIENT-SIDE)
+        // 4. BANTUAN KONVERSI & KOMPRESI FILE
         function compressAndEncodeBase64(file) {
             return new Promise((resolve, reject) => {
                 if (file.type === 'application/pdf') {
@@ -715,9 +699,7 @@
                     document.getElementById('form-spt').reset();
                     currentUser.sptHistory.push({ tahun: data.tahunPajak, link: data.fileUrl, waktu: data.waktu });
                     
-                    // Update profil yang tersimpan di localStorage agar riwayat terbaru ikut masuk
                     localStorage.setItem('spt_user', JSON.stringify(currentUser));
-                    
                     renderSptHistory();
                 } else { throw new Error(data.message); }
                 showLoader(false);
@@ -740,7 +722,7 @@
                 const data = await res.json();
                 
                 if (data.status === 'success') {
-                    globalUsersData = data.usersData || []; // Simpan utk mapping NIK
+                    globalUsersData = data.usersData || []; 
                     
                     const tabUsersBtn = document.getElementById('tab-btn-users');
                     if (data.role === 'Superadmin') {
@@ -750,7 +732,6 @@
                         tabUsersBtn.classList.add('hidden');
                     }
                     
-                    // Inisiasi Paginasi SPT
                     adminSptData = data.sptData || [];
                     document.getElementById('search-spt').value = '';
                     filterTableSPT(); 
@@ -777,7 +758,7 @@
             document.getElementById('tab-btn-' + tabName).className = "flex-1 sm:flex-none px-3 py-1.5 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
         }
 
-        // --- SISTEM PAGINASI TABEL SPT ---
+        // --- SISTEM PAGINASI & VERIFIKASI TABEL SPT ---
         function filterTableSPT() {
             const term = document.getElementById('search-spt').value.toLowerCase();
             filteredSptData = adminSptData.filter(row => {
@@ -828,7 +809,6 @@
                 `;
             });
 
-            // Reset Select All
             const cbAll = document.getElementById('cb-spt-all');
             if(cbAll) cbAll.checked = false;
             checkBulkActionVisibilitySPT();
@@ -848,7 +828,6 @@
             renderPaginatedTableSPT();
         }
 
-        // --- FUNGSI VERIFIKASI BULK SPT ---
         function toggleSelectAllSPT(source) { 
             document.querySelectorAll('.cb-spt').forEach(cb => cb.checked = source.checked); 
             checkBulkActionVisibilitySPT(); 
@@ -894,7 +873,7 @@
                 const data = await res.json();
                 if (data.status === 'success') {
                     Swal.fire('Berhasil!', data.message, 'success');
-                    loadAdminDashboard(); // Refresh data untuk memuat status terbaru
+                    loadAdminDashboard(); 
                 } else { throw new Error(data.message); }
             } catch (err) {
                 Swal.fire('Gagal', err.message, 'error');
@@ -910,7 +889,6 @@
             }
 
             const excelData = filteredSptData.map(row => {
-                // Mencari NIK dari data globalUsersData berdasarkan Email
                 const user = globalUsersData.find(u => String(u['Email']).toLowerCase() === String(row['Email']).toLowerCase());
                 const nik = user ? user['NIK'] : '-';
 
@@ -988,7 +966,6 @@
             }
         }
 
-        // Filter Sederhana Khusus Tabel Users
         function filterTableUsers(inputId, tableId) {
             let input = document.getElementById(inputId);
             let filter = input.value.toUpperCase();
