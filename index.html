@@ -322,16 +322,30 @@
             <!-- KONTEN TAB SPT -->
             <div id="admin-tab-spt">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3 gap-3">
-                    <h3 class="font-bold text-gray-700 text-sm md:text-base">Daftar Pegawai Lapor SPT</h3>
+                    <div class="flex items-center gap-3">
+                        <h3 class="font-bold text-gray-700 text-sm md:text-base">Daftar Pegawai Lapor SPT</h3>
+                        <div id="bulk-action-container-spt" class="hidden flex gap-2 ml-2">
+                            <button onclick="prosesBulkVerifikasi('Terverifikasi Sesuai')" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded text-xs md:text-sm font-bold shadow transition"><i class="fas fa-check-double mr-1"></i> Setujui</button>
+                            <button onclick="prosesBulkVerifikasi('Tidak Sesuai / Ditolak')" class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 md:px-3 md:py-1.5 rounded text-xs md:text-sm font-bold shadow transition"><i class="fas fa-times-circle mr-1"></i> Tolak</button>
+                        </div>
+                    </div>
                     <div class="flex gap-2 w-full sm:w-auto">
                         <input type="text" id="search-spt" onkeyup="filterTableSPT()" placeholder="Cari Nama / Ruangan..." class="p-2 border border-gray-300 rounded w-full sm:w-64 focus:ring-1 focus:ring-blue-500 outline-none text-sm">
                         <button onclick="exportSPTToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded text-sm shadow transition whitespace-nowrap flex items-center"><i class="fas fa-file-excel mr-1.5"></i> Download Excel</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-t-lg border border-gray-200 shadow-sm">
-                    <table class="w-full text-left text-xs md:text-sm whitespace-nowrap min-w-[600px]" id="table-spt">
+                    <table class="w-full text-left text-xs md:text-sm whitespace-nowrap min-w-[700px]" id="table-spt">
                         <thead class="bg-gray-100 text-gray-700 sticky top-0 shadow-sm z-10">
-                            <tr><th class="p-3">Waktu Lapor</th><th class="p-3">Nama Pegawai</th><th class="p-3">Ruangan</th><th class="p-3">Tahun</th><th class="p-3 text-center">Bukti</th></tr>
+                            <tr>
+                                <th class="p-3 w-10 text-center"><input type="checkbox" id="cb-spt-all" onchange="toggleSelectAllSPT(this)"></th>
+                                <th class="p-3">Waktu Lapor</th>
+                                <th class="p-3">Nama Pegawai</th>
+                                <th class="p-3">Ruangan</th>
+                                <th class="p-3">Tahun</th>
+                                <th class="p-3">Status Verifikasi</th>
+                                <th class="p-3 text-center">Bukti</th>
+                            </tr>
                         </thead>
                         <tbody id="tbody-spt" class="divide-y divide-gray-100">
                             <!-- Injected -->
@@ -779,7 +793,7 @@
             tbody.innerHTML = '';
             
             if (filteredSptData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-500">Belum ada data pelaporan SPT.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-500">Belum ada data pelaporan SPT.</td></tr>';
                 document.getElementById('pagination-info-spt').innerText = 'Menampilkan 0 data';
                 document.getElementById('pagination-controls-spt').innerHTML = '';
                 return;
@@ -794,16 +808,30 @@
 
             pageData.forEach(row => {
                 const dateStr = new Date(row['Waktu Lapor']).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'});
+                
+                let statusBadge = '';
+                const currentStatus = row['Status Verifikasi'] || 'Menunggu Verifikasi';
+                if (currentStatus.includes('Menunggu')) statusBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-[10px] font-bold"><i class="fas fa-clock mr-1"></i>Menunggu</span>`;
+                else if (currentStatus.includes('Sesuai') && !currentStatus.includes('Tidak')) statusBadge = `<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-[10px] font-bold"><i class="fas fa-check mr-1"></i>Sesuai</span>`;
+                else statusBadge = `<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-[10px] font-bold"><i class="fas fa-times mr-1"></i>Ditolak</span>`;
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-blue-50 transition border-b border-gray-100">
+                        <td class="p-2.5 md:p-3 text-center"><input type="checkbox" class="cb-spt" value="${row['ID Laporan']}" onchange="checkBulkActionVisibilitySPT()"></td>
                         <td class="p-2.5 md:p-3 text-[10px] md:text-xs text-gray-500">${dateStr}</td>
                         <td class="p-2.5 md:p-3"><p class="font-bold text-gray-800 text-xs md:text-sm">${row['Nama Lengkap']}</p><p class="text-[10px] md:text-xs text-gray-500">${row['Email']}</p></td>
                         <td class="p-2.5 md:p-3 text-xs md:text-sm truncate max-w-[120px]" title="${row['Ruangan']}">${row['Ruangan']}</td>
                         <td class="p-2.5 md:p-3 font-bold text-blue-600 text-xs md:text-sm">${row['Tahun Pajak']}</td>
+                        <td class="p-2.5 md:p-3">${statusBadge}</td>
                         <td class="p-2.5 md:p-3 text-center"><a href="${row['Link Bukti']}" target="_blank" class="text-[10px] md:text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 md:px-3 md:py-1.5 rounded font-bold transition inline-block whitespace-nowrap"><i class="fas fa-download mr-1"></i> Bukti</a></td>
                     </tr>
                 `;
             });
+
+            // Reset Select All
+            const cbAll = document.getElementById('cb-spt-all');
+            if(cbAll) cbAll.checked = false;
+            checkBulkActionVisibilitySPT();
 
             document.getElementById('pagination-info-spt').innerText = `Menampilkan ${start + 1} - ${end} dari ${filteredSptData.length} Laporan`;
             
@@ -818,6 +846,61 @@
         function changePageSPT(newPage) {
             currentPageSPT = newPage;
             renderPaginatedTableSPT();
+        }
+
+        // --- FUNGSI VERIFIKASI BULK SPT ---
+        function toggleSelectAllSPT(source) { 
+            document.querySelectorAll('.cb-spt').forEach(cb => cb.checked = source.checked); 
+            checkBulkActionVisibilitySPT(); 
+        }
+
+        function checkBulkActionVisibilitySPT() {
+            const anyChecked = document.querySelectorAll('.cb-spt:checked').length > 0;
+            const allCheckboxes = document.querySelectorAll('.cb-spt').length;
+            const checkedCount = document.querySelectorAll('.cb-spt:checked').length;
+            
+            const container = document.getElementById('bulk-action-container-spt'); 
+            const selectAllCb = document.getElementById('cb-spt-all');
+            
+            if (anyChecked) container.classList.remove('hidden');
+            else container.classList.add('hidden');
+            
+            if (selectAllCb) selectAllCb.checked = (checkedCount === allCheckboxes && allCheckboxes > 0);
+        }
+
+        async function prosesBulkVerifikasi(statusVal) {
+            const checkedBoxes = document.querySelectorAll('.cb-spt:checked'); 
+            const ids = Array.from(checkedBoxes).map(cb => cb.value);
+            
+            if (ids.length === 0) return;
+
+            const { isConfirmed } = await Swal.fire({ 
+                title: 'Konfirmasi Verifikasi', 
+                text: `Anda yakin ingin menandai ${ids.length} laporan terpilih sebagai "${statusVal}"?`, 
+                icon: 'question', 
+                showCancelButton: true, 
+                confirmButtonText: 'Ya, Lanjutkan', 
+                cancelButtonText: 'Batal' 
+            });
+
+            if (!isConfirmed) return;
+
+            showLoader(true, "Memproses Verifikasi...");
+            try {
+                const res = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'bulkVerifySPT', token: currentToken, laporanIds: ids, statusVal: statusVal })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    Swal.fire('Berhasil!', data.message, 'success');
+                    loadAdminDashboard(); // Refresh data untuk memuat status terbaru
+                } else { throw new Error(data.message); }
+            } catch (err) {
+                Swal.fire('Gagal', err.message, 'error');
+            } finally {
+                showLoader(false);
+            }
         }
 
         // --- FUNGSI EXPORT EXCEL ---
@@ -836,6 +919,7 @@
                     'NIK': nik,
                     'Ruangan': row['Ruangan'],
                     'Tahun Pajak': row['Tahun Pajak'],
+                    'Status Verifikasi': row['Status Verifikasi'] || 'Menunggu Verifikasi',
                     'Email': row['Email'],
                     'Nomor HP': row['Nomor HP'] || '-',
                     'Waktu Lapor': new Date(row['Waktu Lapor']).toLocaleString('id-ID'),
