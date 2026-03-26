@@ -87,7 +87,7 @@
             <!-- 2. VIEW PROFIL BARU -->
             <div id="view-profil" class="glass-panel rounded-2xl p-6 md:p-8 hidden transition-all duration-300">
                 <h2 class="text-xl font-bold text-gray-800 mb-1 border-b-2 border-blue-500 pb-2">Lengkapi Data Profil</h2>
-                <p class="text-sm text-gray-600 mb-6">Tampaknya Anda baru pertama kali login. Mohon lengkapi data profil Anda.</p>
+                <p class="text-sm text-gray-600 mb-6">Tampaknya Anda belum terdaftar. Mohon lengkapi data profil Anda.</p>
                 
                 <form id="form-profil" class="space-y-4">
                     <div>
@@ -150,14 +150,35 @@
                     <h2 class="text-xl font-bold text-gray-800">Form Laporan SPT</h2>
                     <span id="user-badge" class="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1 rounded">User Aktif</span>
                 </div>
-                
-                <div class="bg-gray-50 border border-gray-200 p-3 rounded-lg mb-6 text-sm">
-                    <p><strong>Nama:</strong> <span id="spt-nama-display">-</span></p>
-                    <p><strong>Email:</strong> <span id="spt-email-display">-</span></p>
-                </div>
 
-                <form id="form-spt" class="space-y-5">
-                    <div>
+                <form id="form-spt" class="space-y-4">
+                    
+                    <!-- DATA OTOMATIS (READONLY) -->
+                    <div class="bg-gray-50 border border-gray-200 p-4 rounded-lg space-y-3 mb-2">
+                        <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 border-b pb-1">Data Pegawai</p>
+                        
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Email</label>
+                            <input type="text" id="spt-email-display" class="w-full p-2 bg-gray-100 border border-gray-300 rounded text-gray-600 text-sm font-medium focus:outline-none" readonly>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-500 mb-1">Nama Lengkap</label>
+                            <input type="text" id="spt-nama-display" class="w-full p-2 bg-gray-100 border border-gray-300 rounded text-gray-600 text-sm font-medium focus:outline-none" readonly>
+                        </div>
+                        <div class="flex gap-3">
+                            <div class="w-1/2">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">Ruangan</label>
+                                <input type="text" id="spt-ruangan-display" class="w-full p-2 bg-gray-100 border border-gray-300 rounded text-gray-600 text-sm font-medium focus:outline-none" readonly>
+                            </div>
+                            <div class="w-1/2">
+                                <label class="block text-xs font-semibold text-gray-500 mb-1">Nomor HP</label>
+                                <input type="text" id="spt-hp-display" class="w-full p-2 bg-gray-100 border border-gray-300 rounded text-gray-600 text-sm font-medium focus:outline-none" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- INPUT SPT BARU -->
+                    <div class="pt-2">
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Tahun Pajak <span class="text-red-500">*</span></label>
                         <select id="spt-tahun" required class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none">
                             <option value="" disabled selected>-- Pilih Tahun Pajak --</option>
@@ -190,10 +211,8 @@
 
     <!-- SCRIPT APLIKASI -->
     <script>
-        // =========================================================================
-        // WAJIB DIISI: GANTI URL DI BAWAH DENGAN URL WEB APP GOOGLE SCRIPT ANDA
-        // =========================================================================
-        const GAS_WEB_APP_URL = "MASUKKAN_URL_WEB_APP_DISINI"; 
+        // URL WEB APP TERBARU ANDA
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyUu86Fgph76tNa7vSyfM5KWBzImXzVtSPe8tr2GE5xddRNsqvOR_XvkJo6DfgtpYmj/exec";
 
         // STATE APLIKASI
         let currentUser = null;
@@ -233,11 +252,11 @@
                 
                 if (data.status === 'success') {
                     if (data.isRegistered) {
-                        // User sudah ada profilnya
+                        // User ditemukan di database (dari 'Users' atau 'submisi')
                         currentUser = data.data; 
                         prepareSPTForm();
                     } else {
-                        // User baru, arahkan ke form profil
+                        // User belum ada di manapun, isi form profil
                         currentUser = { Email: data.email };
                         document.getElementById('prof-email').value = data.email;
                         switchView('view-profil');
@@ -285,8 +304,10 @@
                 const data = await res.json();
                 
                 if (data.status === 'success') {
-                    // Berhasil simpan, update state dan lanjut ke form SPT
+                    // Update state agar bisa dipakai SPT
                     currentUser['Nama Lengkap'] = profileData.namaLengkap;
+                    currentUser['Nomor HP'] = profileData.nomorHp;
+                    currentUser['Ruangan'] = profileData.ruangan;
                     prepareSPTForm();
                 } else {
                     throw new Error(data.message);
@@ -298,10 +319,12 @@
             }
         });
 
-        // 3. PREPARE FORM SPT (Menampilkan nama & email statis)
+        // 3. PREPARE FORM SPT (Menampilkan data otomatis dari Database)
         function prepareSPTForm() {
-            document.getElementById('spt-nama-display').innerText = currentUser['Nama Lengkap'];
-            document.getElementById('spt-email-display').innerText = currentUser.Email;
+            document.getElementById('spt-email-display').value = currentUser.Email || '-';
+            document.getElementById('spt-nama-display').value = currentUser['Nama Lengkap'] || '-';
+            document.getElementById('spt-hp-display').value = currentUser['Nomor HP'] || '-';
+            document.getElementById('spt-ruangan-display').value = currentUser['Ruangan'] || '-';
             switchView('view-spt');
         }
 
@@ -335,6 +358,8 @@
                 const sptData = {
                     email: currentUser.Email,
                     namaLengkap: currentUser['Nama Lengkap'],
+                    nomorHp: currentUser['Nomor HP'],
+                    ruangan: currentUser['Ruangan'],
                     tahunPajak: document.getElementById('spt-tahun').value,
                     fileName: file.name,
                     mimeType: file.type,
