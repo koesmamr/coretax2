@@ -485,43 +485,104 @@
             }
         }
 
-        // 4. SUBMIT SPT BARU
+        // 4. BANTUAN KONVERSI & KOMPRESI FILE KE BASE64 (CLIENT-SIDE)
+        function compressAndEncodeBase64(file) {
+            return new Promise((resolve, reject) => {
+                // Jika file adalah PDF, langsung baca menjadi Base64 tanpa kompresi
+                if (file.type === 'application/pdf') {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve({ base64: reader.result.split(',')[1], type: file.type });
+                    reader.onerror = error => reject(error);
+                    return;
+                }
+
+                // Jika file adalah gambar, lakukan kompresi menggunakan Canvas
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            const MAX_WIDTH = 1200; // Maksimal lebar gambar
+                            const MAX_HEIGHT = 1200; // Maksimal tinggi gambar
+                            let width = img.width;
+                            let height = img.height;
+
+                            // Kalkulasi rasio aspek
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            // Kompresi menjadi JPEG dengan kualitas 0.7 (70%)
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                            resolve({ base64: dataUrl.split(',')[1], type: 'image/jpeg' });
+                        };
+                        img.onerror = error => reject(error);
+                        img.src = event.target.result;
+                    };
+                    reader.onerror = error => reject(error);
+                    reader.readAsDataURL(file);
+                } else {
+                    reject(new Error("Format file tidak didukung."));
+                }
+            });
+        }
+
+        // 5. HANDLE SUBMIT LAPORAN SPT
         document.getElementById('form-spt').addEventListener('submit', async function(e) {
             e.preventDefault();
             const fileInput = document.getElementById('spt-file');
             if (fileInput.files.length === 0) return;
             
             const file = fileInput.files[0];
-            if (file.size > 5 * 1024 * 1024) return Swal.fire('Terlalu Besar', 'Maksimal ukuran file 5MB.', 'warning');
+            if (file.size > 5 * 1024 * 1024) return Swal.fire('Terlalu Besar', 'Maksimal ukuran file awal 5MB.', 'warning');
 
             showLoader(true, "Mengunggah Laporan...");
             try {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = async () => {
-                    const base64Data = reader.result.split(',')[1];
-                    const sptData = {
-                        email: currentUser.Email, namaLengkap: currentUser['Nama Lengkap'],
-                        nomorHp: currentUser['Nomor HP'], ruangan: currentUser['Ruangan'],
-                        tahunPajak: document.getElementById('spt-tahun').value,
-                        fileName: file.name, mimeType: file.type, fileBase64: base64Data
-                    };
+                // Gunakan fungsi kompresi client-side
+                const compressedFile = await compressAndEncodeBase64(file);
+                
+                // Jika gambar dikonversi, pastikan eksensinya diganti menjadi .jpg
+                let finalFileName = file.name;
+                if (compressedFile.type === 'image/jpeg' && !finalFileName.toLowerCase().endsWith('.jpg') && !finalFileName.toLowerCase().endsWith('.jpeg')) {
+                    finalFileName = finalFileName.split('.')[0] + '.jpg';
+                }
 
-                    const res = await fetch(GAS_WEB_APP_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'submitSPT', sptData: sptData, token: currentToken })
-                    });
-                    const data = await res.json();
-                    
-                    if (data.status === 'success') {
-                        Swal.fire('Berhasil!', 'Laporan SPT Anda telah tersimpan.', 'success');
-                        document.getElementById('form-spt').reset();
-                        // Langsung tambahkan ke histori lokal & render ulang
-                        currentUser.sptHistory.push({ tahun: data.tahunPajak, link: data.fileUrl, waktu: data.waktu });
-                        renderSptHistory();
-                    } else { throw new Error(data.message); }
-                    showLoader(false);
+                const sptData = {
+                    email: currentUser.Email, namaLengkap: currentUser['Nama Lengkap'],
+                    nomorHp: currentUser['Nomor HP'], ruangan: currentUser['Ruangan'],
+                    tahunPajak: document.getElementById('spt-tahun').value,
+                    fileName: finalFileName, mimeType: compressedFile.type, fileBase64: compressedFile.base64
                 };
+
+                const res = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'submitSPT', sptData: sptData, token: currentToken })
+                });
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    Swal.fire('Berhasil!', 'Laporan SPT Anda telah tersimpan.', 'success');
+                    document.getElementById('form-spt').reset();
+                    // Langsung tambahkan ke histori lokal & render ulang
+                    currentUser.sptHistory.push({ tahun: data.tahunPajak, link: data.fileUrl, waktu: data.waktu });
+                    renderSptHistory();
+                } else { throw new Error(data.message); }
+                showLoader(false);
             } catch (err) { 
                 Swal.fire('Gagal', err.message, 'error'); 
                 showLoader(false);
