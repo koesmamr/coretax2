@@ -4,28 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Evaluasi Pelaporan SPT - RSUD dr. R. Koesma</title>
+    
+    <!-- Favicon & Logo Sesuai Permintaan -->
     <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/srpcom/koesmaparkir/main/new%20logo%20rsud%202025%20kecil.png">
     
     <!-- Tailwind CSS & FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- SweetAlert2 -->
+    <!-- SweetAlert2 & Particles.js -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+    
     <!-- Google GSI (SSO) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
+        /* Transisi halus untuk perubahan mode background */
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: background 0.5s ease;
+        }
+
+        /* 1. Mode Login (Background Gradasi Gelap Elegan) */
+        body.login-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+        }
+
+        /* 2. Mode Aplikasi (Background Gambar Asli) */
+        body.app-mode {
             background-color: #f0fdf4;
             background-image: url('https://github.com/srpcom/coretaxcekdata/blob/main/KPP%20Pratama%20Tuban_Panduan%20-%20Login%20dan%20KODJP%20Coretax%20WP_Page_01.jpg?raw=true');
-            background-size: cover; background-position: center; background-attachment: fixed;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-size: cover; 
+            background-position: center; 
+            background-attachment: fixed;
         }
+
+        /* Particles Layer - Hanya tampil di login mode */
+        #particles-js {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+        }
+        body.app-mode #particles-js {
+            display: none !important;
+        }
+
         .glass-panel {
             background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
+        
         #loader {
             display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7);
             z-index: 9999; justify-content: center; align-items: center; flex-direction: column;
@@ -36,20 +63,24 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Mobile Optimizations for inputs */
+        /* Optimasi Teks Mobile agar tidak auto-zoom di iOS */
         input, select, textarea { font-size: 16px !important; }
         @media (min-width: 768px) {
             input, select, textarea { font-size: 14px !important; }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<!-- Default dimulai di login-mode -->
+<body class="min-h-screen flex flex-col login-mode">
+
+    <!-- LAYER PARTICLES.JS -->
+    <div id="particles-js"></div>
 
     <!-- OVERLAY LOADER -->
     <div id="loader"><div class="spinner"></div><p class="text-white mt-4 font-semibold text-lg animate-pulse" id="loader-text">Memproses...</p></div>
 
-    <!-- HEADER / NAVBAR -->
-    <header class="bg-blue-700 bg-opacity-95 text-white shadow-lg p-3 sticky top-0 z-50">
+    <!-- HEADER / NAVBAR (Sembunyi otomatis saat di halaman login) -->
+    <header id="app-header" class="hidden bg-blue-700 bg-opacity-95 text-white shadow-lg p-3 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2 md:gap-3 min-w-0 pr-2">
                 <img src="https://raw.githubusercontent.com/srpcom/koesmaparkir/main/new%20logo%20rsud%202025%20kecil.png" alt="Logo" class="h-9 md:h-10 bg-white rounded-full p-1 shadow flex-shrink-0">
@@ -59,7 +90,7 @@
                 </div>
             </div>
             
-            <!-- Navbar Actions (Hidden until login) -->
+            <!-- Navbar Actions -->
             <div id="nav-actions" class="hidden flex items-center gap-1 md:gap-4 text-sm flex-shrink-0">
                 <button onclick="switchView('view-spt')" class="hover:text-blue-200 transition p-2"><i class="fas fa-home text-lg md:text-base"></i> <span class="hidden md:inline ml-1">Dashboard</span></button>
                 <button id="btn-nav-admin" onclick="loadAdminDashboard()" class="hidden bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1.5 md:px-3 rounded-md font-bold shadow transition"><i class="fas fa-shield-alt"></i> <span class="hidden md:inline ml-1">Admin</span></button>
@@ -69,17 +100,22 @@
     </header>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-grow flex items-start md:items-center justify-center p-3 md:p-6">
+    <main class="flex-grow flex items-center justify-center p-4">
         
-        <!-- 1. VIEW LOGIN -->
-        <div id="view-login" class="w-full max-w-xl glass-panel rounded-2xl p-6 md:p-8 text-center transition-all duration-300 mt-4 md:mt-0">
-            <i class="fas fa-file-invoice-dollar text-4xl md:text-5xl text-blue-600 mb-4 block"></i>
-            <h2 class="text-xl md:text-2xl font-bold text-gray-800 mb-2">Portal Pelaporan SPT</h2>
-            <p class="text-gray-600 mb-6 md:mb-8 text-sm">Silakan login menggunakan akun Google Anda untuk mengisi laporan atau melihat riwayat SPT.</p>
+        <!-- 1. VIEW LOGIN (Modern Card Design) -->
+        <div id="view-login" class="w-full max-w-md bg-white rounded-3xl p-8 md:p-10 text-center shadow-2xl relative z-10 transition-all duration-500">
+            <img src="https://raw.githubusercontent.com/srpcom/koesmaparkir/main/new%20logo%20rsud%202025%20kecil.png" alt="Logo RSUD dr. R. Koesma" class="h-24 md:h-28 mx-auto mb-6 object-contain drop-shadow-md">
             
-            <div class="flex justify-center mb-2">
+            <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800 mb-2">Portal Pelaporan SPT</h2>
+            <p class="text-gray-500 mb-8 text-sm leading-relaxed px-2">Silakan login menggunakan akun Google Anda untuk mengisi laporan atau melihat riwayat SPT.</p>
+            
+            <div class="flex justify-center mb-6">
                 <div id="g_id_onload" data-client_id="181120297143-lvpop0ra4o9q6i3g18b74ubsuc8e59fh.apps.googleusercontent.com" data-callback="handleCredentialResponse" data-auto_prompt="false"></div>
                 <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with" data-shape="rectangular" data-logo_alignment="left"></div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-5 mt-2">
+                <p class="text-xs text-gray-400 font-medium">&copy; 2026 RSUD dr. R. Koesma</p>
             </div>
         </div>
 
@@ -322,7 +358,7 @@
         </div>
     </main>
 
-    <footer class="bg-transparent text-center p-4 text-xs md:text-sm text-gray-600 mt-auto">
+    <footer id="app-footer" class="hidden bg-transparent text-center p-4 text-xs md:text-sm text-gray-600 mt-auto">
         &copy; 2026 RSUD dr. R. Koesma. All rights reserved.
     </footer>
 
@@ -337,15 +373,54 @@
         let currentUser = null;
         let currentToken = null;
 
-        // FUNGSI UTILIY
+        // INIT PARTICLES (Aktif hanya saat login-mode)
+        window.onload = function() {
+            if(typeof particlesJS !== 'undefined') {
+                particlesJS("particles-js", {
+                    "particles": {
+                        "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+                        "color": { "value": "#ffffff" },
+                        "shape": { "type": "circle" },
+                        "opacity": { "value": 0.3, "random": false },
+                        "size": { "value": 3, "random": true },
+                        "line_linked": { "enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.2, "width": 1 },
+                        "move": { "enable": true, "speed": 1.5, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false }
+                    },
+                    "interactivity": {
+                        "detect_on": "canvas",
+                        "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" }, "resize": true },
+                        "modes": { "grab": { "distance": 140, "line_linked": { "opacity": 0.5 } }, "push": { "particles_nb": 3 } }
+                    },
+                    "retina_detect": true
+                });
+            }
+        };
+
+        // FUNGSI UTILITY
         function showLoader(show, text = "Memproses...") {
             document.getElementById('loader').style.display = show ? 'flex' : 'none';
             document.getElementById('loader-text').innerText = text;
         }
 
         function switchView(viewId) {
-            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            // Sembunyikan semua view main container
+            document.querySelectorAll('main > div').forEach(el => {
+                if (el.id.startsWith('view-')) el.classList.add('hidden');
+            });
             document.getElementById(viewId).classList.remove('hidden');
+
+            // Kontrol Mode UI (Background & Header/Footer visibility)
+            if (viewId === 'view-login') {
+                document.body.classList.remove('app-mode');
+                document.body.classList.add('login-mode');
+                document.getElementById('app-header').classList.add('hidden');
+                document.getElementById('app-footer').classList.add('hidden');
+            } else {
+                document.body.classList.remove('login-mode');
+                document.body.classList.add('app-mode');
+                document.getElementById('app-header').classList.remove('hidden');
+                document.getElementById('app-footer').classList.remove('hidden');
+            }
         }
 
         function logout() {
