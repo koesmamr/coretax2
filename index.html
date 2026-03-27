@@ -344,11 +344,11 @@
                         <thead class="bg-gray-100 text-gray-700 sticky top-0 shadow-sm z-10">
                             <tr>
                                 <th class="p-3 w-10 text-center"><input type="checkbox" id="cb-spt-all" onchange="toggleSelectAllSPT(this)"></th>
-                                <th class="p-3">Waktu Lapor</th>
-                                <th class="p-3">Nama Pegawai</th>
-                                <th class="p-3">Ruangan</th>
-                                <th class="p-3">Tahun</th>
-                                <th class="p-3">Status Verifikasi</th>
+                                <th class="p-3 cursor-pointer hover:bg-gray-200 transition select-none" onclick="handleSortSPT('Waktu Lapor')">Waktu Lapor <i class="sort-icon fas fa-sort ml-1 text-gray-400" data-col="Waktu Lapor"></i></th>
+                                <th class="p-3 cursor-pointer hover:bg-gray-200 transition select-none" onclick="handleSortSPT('Nama Lengkap')">Nama Pegawai <i class="sort-icon fas fa-sort ml-1 text-gray-400" data-col="Nama Lengkap"></i></th>
+                                <th class="p-3 cursor-pointer hover:bg-gray-200 transition select-none" onclick="handleSortSPT('Ruangan')">Ruangan <i class="sort-icon fas fa-sort ml-1 text-gray-400" data-col="Ruangan"></i></th>
+                                <th class="p-3 cursor-pointer hover:bg-gray-200 transition select-none" onclick="handleSortSPT('Tahun Pajak')">Tahun <i class="sort-icon fas fa-sort ml-1 text-gray-400" data-col="Tahun Pajak"></i></th>
+                                <th class="p-3 cursor-pointer hover:bg-gray-200 transition select-none" onclick="handleSortSPT('Status Verifikasi')">Status Verifikasi <i class="sort-icon fas fa-sort ml-1 text-gray-400" data-col="Status Verifikasi"></i></th>
                                 <th class="p-3 text-center">Bukti</th>
                             </tr>
                         </thead>
@@ -403,12 +403,14 @@
         let currentUser = null;
         let currentToken = null;
         
-        // State untuk Paginasi Admin SPT
+        // State untuk Paginasi & Sorting Admin SPT
         let adminSptData = [];
         let filteredSptData = [];
         let globalUsersData = []; // Untuk cross-reference Export NIK
         let currentPageSPT = 1;
         const rowsPerPageSPT = 15;
+        let sortColSPT = 'Waktu Lapor'; // Default kolom pengurutan
+        let sortDirSPT = 'desc'; // Default arah pengurutan (descending/terbaru)
 
         // INIT PARTICLES & CEK SESI LOGIN
         window.onload = function() {
@@ -835,15 +837,60 @@
             document.getElementById('tab-btn-' + tabName).className = "flex-1 sm:flex-none px-3 py-1.5 text-xs md:text-sm font-bold bg-white text-blue-600 rounded shadow-sm transition";
         }
 
-        // --- SISTEM PAGINASI & VERIFIKASI TABEL SPT ---
+        // --- SISTEM PAGINASI, SORTING & VERIFIKASI TABEL SPT ---
+        function handleSortSPT(col) {
+            // Jika kolom yang diklik sama, balik arah urutan. Jika beda, mulai dari A-Z (asc)
+            if (sortColSPT === col) {
+                sortDirSPT = sortDirSPT === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColSPT = col;
+                sortDirSPT = 'asc';
+            }
+            applySortAndRender();
+        }
+
+        function applySortAndRender() {
+            // 1. Update ikon panah di judul tabel
+            document.querySelectorAll('.sort-icon').forEach(icon => {
+                if (icon.getAttribute('data-col') === sortColSPT) {
+                    icon.className = `sort-icon fas fa-sort-${sortDirSPT === 'asc' ? 'up' : 'down'} ml-1 text-blue-600`;
+                } else {
+                    icon.className = 'sort-icon fas fa-sort ml-1 text-gray-400';
+                }
+            });
+
+            // 2. Lakukan pengurutan pada data yang tampil
+            filteredSptData.sort((a, b) => {
+                let valA = a[sortColSPT];
+                let valB = b[sortColSPT];
+
+                // Penanganan khusus jika mengurutkan tanggal
+                if (sortColSPT === 'Waktu Lapor') {
+                    valA = new Date(valA).getTime();
+                    valB = new Date(valB).getTime();
+                } else {
+                    valA = String(valA || '').toLowerCase();
+                    valB = String(valB || '').toLowerCase();
+                }
+
+                if (valA < valB) return sortDirSPT === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDirSPT === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            currentPageSPT = 1;
+            renderPaginatedTableSPT();
+        }
+
         function filterTableSPT() {
             const term = document.getElementById('search-spt').value.toLowerCase();
             filteredSptData = adminSptData.filter(row => {
                 const searchStr = `${row['Nama Lengkap']} ${row['Ruangan']} ${row['Tahun Pajak']} ${row['Email']}`.toLowerCase();
                 return searchStr.includes(term);
             });
-            currentPageSPT = 1;
-            renderPaginatedTableSPT();
+            
+            // Terapkan sorting dan rendering (menggantikan currentPage=1 langsung)
+            applySortAndRender(); 
         }
 
         function renderPaginatedTableSPT() {
