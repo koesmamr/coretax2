@@ -624,6 +624,7 @@
             switchView('view-spt');
         }
 
+        // MODIFIKASI: Menambahkan badge status verifikasi pada riwayat SPT
         function renderSptHistory() {
             const container = document.getElementById('spt-history-box');
             const list = document.getElementById('spt-history-list');
@@ -635,10 +636,25 @@
                 
                 sortedHistory.forEach(h => {
                     const dateStr = new Date(h.waktu).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+                    
+                    // --- Logika Badge Status Verifikasi ---
+                    let statusBadge = '';
+                    const currentStatus = h.status || 'Menunggu Verifikasi';
+                    if (currentStatus.includes('Menunggu')) {
+                        statusBadge = `<span class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold md:ml-2 mt-1 md:mt-0 whitespace-nowrap"><i class="fas fa-clock mr-1"></i>Menunggu Verifikasi Admin</span>`;
+                    } else if (currentStatus.includes('Sesuai') && !currentStatus.includes('Tidak')) {
+                        statusBadge = `<span class="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold md:ml-2 mt-1 md:mt-0 whitespace-nowrap"><i class="fas fa-check mr-1"></i>Telah Diverifikasi</span>`;
+                    } else {
+                        statusBadge = `<span class="bg-red-100 text-red-800 px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-bold md:ml-2 mt-1 md:mt-0 whitespace-nowrap"><i class="fas fa-times mr-1"></i>Ditolak / Tidak Sesuai</span>`;
+                    }
+
                     list.innerHTML += `
-                        <li class="flex justify-between items-center bg-white p-2 rounded border border-green-100 shadow-sm text-xs md:text-sm">
-                            <span class="truncate pr-2"><i class="fas fa-calendar-alt text-green-500 mr-1.5 md:mr-2"></i> SPT <b>${h.tahun}</b> <span class="text-[10px] md:text-xs text-gray-400 ml-1">(${dateStr})</span></span>
-                            <a href="${h.link}" target="_blank" class="text-[10px] md:text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 md:py-1.5 rounded transition font-bold whitespace-nowrap"><i class="fas fa-file-pdf mr-1"></i>Bukti</a>
+                        <li class="flex justify-between items-center bg-white p-2 md:p-3 rounded border border-green-100 shadow-sm text-xs md:text-sm">
+                            <div class="flex flex-col md:flex-row md:items-center truncate pr-2 w-full">
+                                <span class="truncate font-semibold text-gray-800"><i class="fas fa-calendar-alt text-green-500 mr-1.5 md:mr-2"></i> SPT ${h.tahun} <span class="text-[10px] md:text-xs text-gray-400 font-normal ml-1">(${dateStr})</span></span>
+                                ${statusBadge}
+                            </div>
+                            <a href="${h.link}" target="_blank" class="text-[10px] md:text-xs bg-green-100 hover:bg-green-200 text-green-700 px-2 py-1 md:px-3 md:py-1.5 rounded transition font-bold whitespace-nowrap ml-2"><i class="fas fa-file-pdf mr-1"></i>Bukti</a>
                         </li>
                     `;
                 });
@@ -727,7 +743,8 @@
                 if (data.status === 'success') {
                     Swal.fire('Berhasil!', 'Laporan SPT Anda telah tersimpan.', 'success');
                     document.getElementById('form-spt').reset();
-                    currentUser.sptHistory.push({ tahun: data.tahunPajak, link: data.fileUrl, waktu: data.waktu });
+                    // MODIFIKASI: Menambahkan status awal 'Menunggu Verifikasi' secara otomatis saat data baru masuk
+                    currentUser.sptHistory.push({ tahun: data.tahunPajak, link: data.fileUrl, waktu: data.waktu, status: 'Menunggu Verifikasi' });
                     
                     localStorage.setItem('spt_user', JSON.stringify(currentUser));
                     renderSptHistory();
